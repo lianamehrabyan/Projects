@@ -1,0 +1,108 @@
+---
+title: "Sportsmen Arrests"
+author: "Liana Mehrabyan"
+date: "12/6/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r,include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(anytime)
+library(lubridate)
+library(ggthemes)
+```
+
+### Exploring the Other Side of Sports: Why Do Sportsmen Get Arrested?
+
+#Introduction
+
+Sports is considered to be a field that promotes healthy lifestyle, good decision-making and a "right" way of living. And the representatives of the field are expected to be following all that principles. However, many occasions have proved the opposite, in fact, many sportmen have been constantly arrested for different reasons, the majority of which are a consequence of leading a non-healthy lifestyle. Let's have a look on the dataset that presents the dark side of the sports and understand what reasons lie behind the arrests of NFL players. 
+
+#Exploratory Data Analysis
+
+The dataset presents 850 occasions of arrests done in the period of 2000-2017. 
+Let's have a look on the evolution of the total number of arrests by years. 
+
+```{r pressure, echo=FALSE}
+df<-read.csv("ArrestIncidents.csv")
+df$DATE<-as.Date(df$DATE,"%m/%d/%Y")
+df$year<-year(df$DATE)
+by_year<-count(df, year)
+ggplot(by_year,aes(year,n))+geom_line()+theme_economist_white()+ggtitle("Number of Arrests by Years")+ylab("Number of Arrests")
+```
+The reason of such decline in 2017 can be the incompleteness of data as it was collected 8 months ago. 
+Let's have a look on the reasons for which the players got arrested.
+
+```{r}
+df$CATEGORY<-factor(df$CATEGORY)
+causes_count<-count(df,CATEGORY)
+causes_count<-causes_count[order(causes_count$n,decreasing = T),]
+head(causes_count)
+```
+As you can see, the top category of arrests is DUI: driving under influence or more commonly known as "drunk driving". Now, should sportsmen be drinking at all? I'll leave this question to the reader. 
+Use of drugs as another cause is also surprising. 
+Other interesting cases include burglary, as it is questionable why sportmen with multimilion dollar salaries could be interesting in burglary at all. More serious categories include murder (Aaron Hernandez,Jovan Belcher), manslaughter (Charles Grant), killing of pregnant women and children. Another extraordinary case happened with Ray Lewis who fatally shot his girlfriend 10 times, then drove to team facility and fatally shot himself in head.
+
+
+```{r}
+arr_cat = group_by(df, CATEGORY) %>%
+  dplyr::summarise(count=n()) %>%
+  arrange(desc(count))
+
+ggplot(arr_cat[0:20,], aes(x=reorder(factor(CATEGORY), count), y=count, alpha=count)) + 
+  geom_bar(stat = "identity", fill="orange") + 
+  xlab("Category") + 
+  ylab("Number of Arrests by Category Through time") + 
+  ggtitle("Arrests by Category from 2000 to 2017") + 
+  coord_flip()
+```
+
+#Classification of the types
+
+```{r}
+arr_case = group_by(df, CASE) %>%
+  dplyr::summarise(count=n()) %>%
+  arrange(desc(count))
+
+ggplot(arr_case[0:2,], aes(x=(factor(CASE)), y=count, alpha=count)) + 
+  geom_bar(stat = "identity", fill="orange") + 
+  xlab("Type") + 
+  ylab("Number of Arrests by Category Through time") + 
+  ggtitle("Dominating Types of Arrests") 
+  
+```
+As you can see, the vast majority of the sportsman in fact got arrested and not charged.
+
+# Teams associated with arrests
+
+Another interesting insight is to look which teams are associated with such criminal cases the most.
+
+```{r}
+team_arr = group_by(df, TEAM) %>%
+  dplyr::summarise(count=n())
+
+ggplot(team_arr, aes(x=reorder(factor(TEAM), count), y=count, alpha=count)) + 
+  geom_bar(stat = "identity", fill="orange") + 
+  xlab("Team") + 
+  ylab("Number of Arrests by Team Through time") + 
+  ggtitle("Arrests by Team from 2000 to 2017")+coord_flip()
+```
+ It is also interesting to have a look on the distribution of crimes by weekdays. My hypothesis is that most of the crimes are commited on Friday, Saturday and Sunday as these are the days when people usually may get drunk, use drugs etc. and consequently commit other more serious crimes. If we assume that the majority of the arrest days would coinside with the crime commitment days, then:
+
+```{r}
+df$weekday<-weekdays(df$DATE)
+week_arr = group_by(df, weekday) %>%
+  dplyr::summarise(count=n())
+ggplot(week_arr, aes(x=reorder(factor(weekday), count), y=count, alpha=count)) + 
+  geom_bar(stat = "identity", fill="orange") + 
+  xlab("Day of Week") + 
+  ylab("Number of Arrests done that day") + 
+  ggtitle("Arrests on Weekdays")+coord_flip()
+```
+Finally, my hypothesis for Saturday and Sunday is accepted, however Friday is not dominating. 
+
