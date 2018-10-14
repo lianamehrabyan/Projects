@@ -1,1 +1,2 @@
-# R_shiny_vizualization
+# Individual and in-class team projects.
+
